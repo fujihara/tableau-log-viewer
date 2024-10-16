@@ -42,6 +42,9 @@ MainWindow::MainWindow()
 
     ReadSettings();
 
+    // Setup and load the last used directory ini the navigation tab
+    SetupNavigationTab();
+
     // Load the theme for the first time
     UpdateTheme();
 
@@ -64,6 +67,46 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+}
+
+void MainWindow::on_treeView_clicked(const QModelIndex &index)
+{
+    // Select clicked
+    treeView->selectionModel()->select(index, QItemSelectionModel::Rows | QItemSelectionModel::Select);
+}
+
+void MainWindow::on_treeView_doubleClicked(const QModelIndex &index)
+{
+    QString path = m_fsmodel->filePath(index);
+    QFileInfo info(path);
+    if (info.exists() && info.isFile()) {
+        TreeActions(path, AppActions::OpenFile);
+    }
+}
+
+void MainWindow::TreeActions(const QString &path, AppActions action)
+{
+    qDebug() << "DirectoryActions" << path;
+    QFileInfo info(path);
+    if (!info.exists()) return;
+
+    bool isFile = info.isFile();
+
+    switch (action) {
+    case AppActions::OpenFile:
+        if (isFile) LoadLogFile(path);
+        break;
+    case AppActions::ChangeDir:
+        if (!isFile) {
+            treeView->reset();
+            m_fsmodel->setRootPath(path);
+            QModelIndex index = m_fsmodel->index(path);
+            qDebug() << "new folder index:" << index.data(Qt::DisplayRole).toString();
+            treeView->setRootIndex(index);
+        }
+    default:
+        break;
+    }
 }
 
 void MainWindow::Recent_files_triggered(QAction * action)
@@ -112,6 +155,15 @@ QString MainWindow::GetOpenDefaultFolder()
     return QDir::currentPath();
 }
 
+QString MainWindow::PickLogFolderToOpen(QString caption)
+{
+    QFileDialog fileDlg(this, caption, GetOpenDefaultFolder(), "");
+    fileDlg.setFileMode(QFileDialog::Directory);
+    fileDlg.exec();
+    m_lastOpenFolder = fileDlg.directory().absolutePath();
+    return m_lastOpenFolder;
+}
+
 QStringList MainWindow::PickLogFilesToOpen(QString caption)
 {
     QFileDialog fileDlg(this, caption, GetOpenDefaultFolder(), "Log Files (*.txt *.log);;All Files (*)");
@@ -136,6 +188,35 @@ void MainWindow::on_actionClear_Recent_Files_triggered()
     ClearRecentFileMenu();
 }
 
+void MainWindow::SetupNavigationTab()
+{
+    // Load file explorer
+    QString path = GetOpenDefaultFolder();
+    m_fsmodel = new QFileSystemModel();
+    m_fsmodel->setRootPath(path);
+    qDebug() << "Default Path" << path;
+    treeView->setModel(m_fsmodel);
+
+
+    // Keep only filenames
+    QHeaderView *header = treeView->header();
+    for (int i = 1; i < header->count(); ++i) {
+        header->hideSection(i);
+    }
+    treeView->resizeColumnToContents(0);
+
+    // Allow multi-selection
+    treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+    // Set tree start point
+    QModelIndex index = m_fsmodel->index(path);
+    treeView->setRootIndex(index);
+
+    // Wire events
+    connect(treeView, &QTreeView::clicked, this, &MainWindow::on_treeView_clicked);
+    connect(treeView, &QTreeView::doubleClicked, this, &MainWindow::on_treeView_doubleClicked);
+}
+
 void MainWindow::ClearRecentFileMenu()
 {
     Ui_MainWindow::menuRecent_files->clear();
@@ -158,7 +239,7 @@ void MainWindow::UpdateTheme()
     this->actionShow_summary->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-summary.png")));
     this->actionRefresh->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-refresh.png")));
     this->actionFind->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-find.png")));
-    this->actionOpen_in_new_tab->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-open.png")));
+    this->actionOpen_in_new_tab->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-copy.png")));
     this->actionMerge_into_tab->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-open-merge.png")));
 }
 
@@ -634,6 +715,13 @@ void MainWindow::on_tabWidget_tabCloseRequested(int index)
     tabWidget->removeTab(index);
     delete tabItem;
     UpdateMenuAndStatusBar();
+}
+
+void MainWindow::on_actionOpen_Folder_triggered()
+{
+    QString dir_path = PickLogFolderToOpen("Select the folder to open");
+    qDebug() << "Open folder:" << dir_path;
+    TreeActions(dir_path, AppActions::ChangeDir);
 }
 
 void MainWindow::on_actionOpen_in_new_tab_triggered()

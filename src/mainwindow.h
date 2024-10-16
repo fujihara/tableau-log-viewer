@@ -18,6 +18,7 @@
 #include <QTreeView>
 #include <QStringList>
 #include <QTimer>
+#include <QFileSystemModel>
 
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
@@ -27,6 +28,8 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
 public:
     MainWindow();
     ~MainWindow();
+
+    enum class AppActions { OpenFile, ChangeDir, Select };
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -44,6 +47,9 @@ private slots:
 
     //Slots use underscores as per QT's automatic connection syntax
     //File
+    void on_treeView_clicked(const QModelIndex &index);
+    void on_treeView_doubleClicked(const QModelIndex &index);
+    void on_actionOpen_Folder_triggered();
     void on_actionOpen_in_new_tab_triggered();
     void on_actionOpen_log_txt_triggered();
     void on_actionOpen_beta_log_txt_triggered();
@@ -83,8 +89,10 @@ private slots:
 private:
     void WriteSettings();
     void ReadSettings();
+    void SetupNavigationTab();
 
     EventListPtr GetEventsFromFile(QString path, int & skippedCount);
+    void TreeActions(const QString &path, AppActions action);
 
     TreeModel * GetCurrentTreeModel();
     QTreeView * GetCurrentTreeView();
@@ -92,6 +100,7 @@ private:
     LogTab * GetLogTab(int index);
 
     QString GetOpenDefaultFolder();
+    QString PickLogFolderToOpen(QString caption);
     QStringList PickLogFilesToOpen(QString caption);
     void UpdateRecentFilesMenu();
     void ClearRecentFileMenu();
@@ -113,6 +122,7 @@ private:
     StatusBar * m_statusBar;
     QStringList m_recentFiles;
     QString m_lastOpenFolder;
+    QFileSystemModel * m_fsmodel = new QFileSystemModel();
 
     // m_liveFiles is used to store all the files that have been opened/are open in the MainWindow.
     // If a user opens a new tab, this structure is used to check the file path of the file being loaded
