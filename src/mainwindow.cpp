@@ -211,10 +211,6 @@ void MainWindow::SetupNavigationTab()
     // Set tree start point
     QModelIndex index = m_fsmodel->index(path);
     treeView->setRootIndex(index);
-
-    // Wire events
-    connect(treeView, &QTreeView::clicked, this, &MainWindow::on_treeView_clicked);
-    connect(treeView, &QTreeView::doubleClicked, this, &MainWindow::on_treeView_doubleClicked);
 }
 
 void MainWindow::ClearRecentFileMenu()
