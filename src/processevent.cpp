@@ -1,17 +1,16 @@
 #include "processevent.h"
 
-#include "options.h"
+#include "appoptions.h"
 #include "pathhelper.h"
 
 #include <QBitArray>
 #include <QJsonDocument>
-#include <QSettings>
 
 namespace ProcessEvent
 {
     QJsonObject ProcessLogEventMessage(int index, QString message, const QString& fileName)
     {
-        Options& options = Options::GetInstance();
+        AppOptions& options = AppOptions::GetInstance();
         QStringList m_SkippedText = options.getSkippedText();
         QBitArray m_SkippedState = options.getSkippedState();
 

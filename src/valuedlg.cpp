@@ -54,7 +54,7 @@ ValueDlg::ValueDlg(QWidget *parent) :
     m_id = QString("");
     m_key = QString("");
     m_queryPlan = QString("");
-    Options& options = Options::GetInstance();
+    AppOptions& options = AppOptions::GetInstance();
     m_visualizationServiceEnable = options.getVisualizationServiceEnable();
     m_visualizationServiceURL = options.getVisualizationServiceURL();
 
@@ -209,7 +209,7 @@ void ValueDlg::SetContent(QString id, QString key, QJsonValue value)
 void ValueDlg::UpdateValueBox() {
     QString value = QJsonUtils::Format(m_value, sm_notation);
 
-    int syntaxHighlightLimit = Options::GetInstance().getSyntaxHighlightLimit();
+    int syntaxHighlightLimit = AppOptions::GetInstance().getSyntaxHighlightLimit();
     bool syntaxHighlight = (!m_key.isEmpty() &&
                             QJsonUtils::IsStructured(m_value) &&
                             syntaxHighlightLimit &&

@@ -1,7 +1,7 @@
 #include "optionsdlg.h"
 #include "ui_optionsdlg.h"
 
-#include "options.h"
+#include "appoptions.h"
 #include "pathhelper.h"
 #include "qjsonutils.h"
 #include "themeutils.h"
@@ -29,7 +29,7 @@ OptionsDlg::~OptionsDlg()
 
 void OptionsDlg::WriteSettings()
 {
-    Options& options = Options::GetInstance();
+    AppOptions& options = AppOptions::GetInstance();
 
     QStringList skippedText;
     QBitArray skippedState(ui->listWidget->count());
@@ -59,7 +59,7 @@ void OptionsDlg::WriteSettings()
 
 void OptionsDlg::ReadSettings()
 {
-    Options& options = Options::GetInstance();
+    AppOptions& options = AppOptions::GetInstance();
 
     QStringList skippedText = options.getSkippedText();
     QBitArray skippedState = options.getSkippedState();
@@ -177,7 +177,7 @@ void OptionsDlg::on_OptionsDlg_accepted()
 void OptionsDlg::on_OptionsDlg_rejected()
 {
     // Revert the theme back if the user cancels the dialog
-    Options& options = Options::GetInstance();
+    AppOptions& options = AppOptions::GetInstance();
     auto themeNameSettings = options.getTheme();
     if (!ThemeUtils::GetThemeNames().contains(themeNameSettings))
     {

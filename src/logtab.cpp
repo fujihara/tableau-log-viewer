@@ -1,7 +1,7 @@
 #include "logtab.h"
 #include "ui_logtab.h"
 
-#include "options.h"
+#include "appoptions.h"
 #include "pathhelper.h"
 #include "processevent.h"
 #include "themeutils.h"
@@ -351,7 +351,7 @@ void LogTab::SetUpFile(std::shared_ptr<QFile> file)
         break;
     }
 
-    bool includeAllTextFiles = Options::GetInstance().getCaptureAllTextFiles();
+    bool includeAllTextFiles = AppOptions::GetInstance().getCaptureAllTextFiles();
     if (includeAllTextFiles || line.startsWith("{"))
     {
         int offset = file->size();
@@ -901,7 +901,7 @@ void LogTab::RowDiffEvents()
     secondOut.flush();
 
     // Initialize the diff tool
-    QString diffToolPath = Options::GetInstance().getDiffToolPath();
+    QString diffToolPath = AppOptions::GetInstance().getDiffToolPath();
     if (QSysInfo::productType() == "osx" &&
         diffToolPath.endsWith(".app"))
     {

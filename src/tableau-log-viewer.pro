@@ -17,6 +17,7 @@ FORMS       = \
     valuedlg.ui 
 
 HEADERS     = \
+    appoptions.h \
     colorlibrary.h \
     column.h \
     filtertab.h \
@@ -25,7 +26,6 @@ HEADERS     = \
     highlightoptions.h \
     logtab.h \
     mainwindow.h \
-    options.h \
     optionsdlg.h \
     pathhelper.h \
     processevent.h \
@@ -42,6 +42,7 @@ HEADERS     = \
     qjsonutils.h
 
 SOURCES     = \
+    appoptions.cpp \
     colorlibrary.cpp \
     filtertab.cpp \
     finddlg.cpp \
@@ -50,7 +51,6 @@ SOURCES     = \
     logtab.cpp \
     main.cpp \
     mainwindow.cpp \
-    options.cpp \
     optionsdlg.cpp \
     pathhelper.cpp \
     processevent.cpp \

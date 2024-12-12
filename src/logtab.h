@@ -1,7 +1,7 @@
 #ifndef LOGTAB_H
 #define LOGTAB_H
 
-#include "options.h"
+#include "appoptions.h"
 #include "statusbar.h"
 #include "treemodel.h"
 #include "valuedlg.h"

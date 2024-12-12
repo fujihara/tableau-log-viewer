@@ -1,6 +1,6 @@
 #include "treemodel.h"
 
-#include "options.h"
+#include "appoptions.h"
 #include "qjsonutils.h"
 #include "themeutils.h"
 #include "treeitem.h"
@@ -20,7 +20,7 @@ TreeModel::TreeModel(const QStringList &headers, const EventListPtr events, QObj
     m_allEvents = events;
     SetupModelData(m_rootItem);
 
-    HighlightOptions defaultHighlightOpts = Options::GetInstance().getDefaultHighlightOpts();
+    HighlightOptions defaultHighlightOpts = AppOptions::GetInstance().getDefaultHighlightOpts();
     if (!defaultHighlightOpts.isEmpty())
     {
         m_highlightOpts = defaultHighlightOpts;
@@ -631,15 +631,15 @@ QString TreeModel::JsonToString(const QJsonValue& json, const bool isSingleLine)
     LineFormat lineFormat = isSingleLine ?
         LineFormat::SingleLine :
         LineFormat::Free;
-    QString notationName = Options::GetInstance().getNotation();
+    QString notationName = AppOptions::GetInstance().getNotation();
     Notation notation = QJsonUtils::GetNotationFromName(notationName);
     return QJsonUtils::Format(json, notation, lineFormat);
 }
 
 QJsonValue TreeModel::ConsolidateValueAndActivity(const QJsonObject& eventObject) const
 {
-    bool showART = eventObject.contains("a") && Options::GetInstance().getShowArtDataInValue();
-    bool showErrorCode = eventObject.contains("e") && Options::GetInstance().getShowErrorCodeInValue();
+    bool showART = eventObject.contains("a") && AppOptions::GetInstance().getShowArtDataInValue();
+    bool showErrorCode = eventObject.contains("e") && AppOptions::GetInstance().getShowErrorCodeInValue();
     
     if (showART || showErrorCode) {
         QJsonObject obj;

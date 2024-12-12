@@ -109,7 +109,7 @@ private:
     void FocusOpenedFile(QString path);
     LogTab* SetUpTab(EventListPtr events, bool isDirectory, QString path, QString label);
 
-    Options& m_options = Options::GetInstance();
+    AppOptions& m_options = AppOptions::GetInstance();
     StatusBar * m_statusBar;
     QStringList m_recentFiles;
     QString m_lastOpenFolder;

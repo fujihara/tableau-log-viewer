@@ -1,6 +1,6 @@
 #include "savefilterdialog.h"
 #include "ui_savefilterdialog.h"
-#include "options.h"
+#include "appoptions.h"
 
 #include <QDebug>
 #include <QDialogButtonBox>
@@ -36,7 +36,7 @@ void SaveFilterDialog::on_buttonBox_clicked(QAbstractButton *button)
         bool success = SaveFilter(filename);
         if (success)
         {
-            Options& options = Options::GetInstance();
+            AppOptions& options = AppOptions::GetInstance();
             if (options.getDefaultFilterName() == filename)
             {
                 options.LoadHighlightFilter(filename);

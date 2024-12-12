@@ -3,7 +3,7 @@
 #include "finddlg.h"
 #include "highlightdlg.h"
 #include "logtab.h"
-#include "options.h"
+#include "appoptions.h"
 #include "optionsdlg.h"
 #include "pathhelper.h"
 #include "processevent.h"
@@ -29,7 +29,6 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QScrollBar>
-#include <QSettings>
 #include <QSignalMapper>
 #include <QTime>
 #include <QTreeView>
@@ -213,48 +212,30 @@ void MainWindow::UpdateMenuAndStatusBar()
 
 void MainWindow::WriteSettings()
 {
-    QString iniPath = PathHelper::GetConfigIniPath();
-    QSettings settings(iniPath, QSettings::IniFormat);
+    MainWindowSettings settings;
+    settings.geometry = saveGeometry();
+    settings.windowState = saveState();
+    settings.recentFiles = m_recentFiles;
+    settings.lastOpenFolder = m_lastOpenFolder;
+    AppOptions::GetInstance().saveMainWindowSettings(settings);
 
-    settings.beginGroup("MainWindow");
-    settings.setValue("geometry", saveGeometry());
-    settings.setValue("windowState", saveState());
-    settings.setValue("recentFiles", m_recentFiles);
-    settings.setValue("lastOpenFolder", m_lastOpenFolder);
-    settings.endGroup();
-
-    ValueDlg::WriteSettings(settings);
-    ZoomableTreeView::WriteSettings(settings);
+    ValueDlg::WriteSettings(AppOptions::GetInstance().getSettings());
+    ZoomableTreeView::WriteSettings(AppOptions::GetInstance().getSettings());
 }
 
 void MainWindow::ReadSettings()
 {
-    QString iniPath = PathHelper::GetConfigIniPath();
-    QSettings settings(iniPath, QSettings::IniFormat);
-
-    settings.beginGroup("MainWindow");
-    if (settings.value("size").isNull())
-    {
-        restoreGeometry(settings.value("geometry").toByteArray());
-        restoreState(settings.value("windowState").toByteArray());
-    }
-    else
-    {
-        // Backcompat: size and pos are now replaced with geometry that works with windowState.
-        resize(settings.value("size").toSize());
-        move(settings.value("pos").toPoint());
-        settings.remove("size");
-        settings.remove("pos");
-    }
-    m_recentFiles = settings.value("recentFiles", QStringList()).toStringList();
-    m_lastOpenFolder = settings.value("lastOpenFolder", QString()).toString();
-    settings.endGroup();
+    MainWindowSettings settings = AppOptions::GetInstance().readMainWindowSettings();
+    restoreGeometry(settings.geometry);
+    restoreState(settings.windowState);
+    m_recentFiles = settings.recentFiles;
+    m_lastOpenFolder = settings.lastOpenFolder;
 
     //Load Options variables from config file
     m_options.ReadSettings();
 
-    ValueDlg::ReadSettings(settings);
-    ZoomableTreeView::ReadSettings(settings);
+    ValueDlg::ReadSettings(AppOptions::GetInstance().getSettings());
+    ZoomableTreeView::ReadSettings(AppOptions::GetInstance().getSettings());
 }
 
 EventListPtr MainWindow::GetEventsFromFile(QString path, int & skippedCount)

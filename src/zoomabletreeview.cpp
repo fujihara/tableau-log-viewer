@@ -1,5 +1,5 @@
 #include "zoomabletreeview.h"
-#include "options.h"
+#include "appoptions.h"
 
 #include <QApplication>
 #include <QDebug>
