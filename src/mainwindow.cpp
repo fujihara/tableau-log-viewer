@@ -10,6 +10,7 @@
 #include "savefilterdialog.h"
 #include "themeutils.h"
 #include "zoomabletreeview.h"
+#include "filesearcher.h"
 
 #include <map>
 
@@ -34,12 +35,21 @@
 #include <QTime>
 #include <QTreeView>
 
+#include "AutoHideDockContainer.h"
+#include "DockManager.h"
+#include "DockAreaWidget.h"
+
+using namespace ads;
+
 MainWindow::MainWindow()
 {
     setupUi(this);
-
     m_statusBar = new StatusBar(this);
 
+    // Set the docking panes
+    SetupDockPanes();
+
+    // Read and restore app settings and state
     ReadSettings();
 
     // Setup and load the last used directory ini the navigation tab
@@ -67,6 +77,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    delete m_fsmodel;
 }
 
 void MainWindow::on_treeView_clicked(const QModelIndex &index)
@@ -188,11 +199,66 @@ void MainWindow::on_actionClear_Recent_Files_triggered()
     ClearRecentFileMenu();
 }
 
+void MainWindow::SetupDockPanes()
+{
+    CDockManager::setAutoHideConfigFlags(CDockManager::DefaultAutoHideConfig);
+    CDockManager::setAutoHideConfigFlag(CDockManager::AutoHideButtonCheckable, true);
+    CDockManager::setAutoHideConfigFlag(CDockManager::AutoHideHasMinimizeButton, false);
+    CDockManager::setAutoHideConfigFlag(CDockManager::AutoHideButtonTogglesArea, false);
+    CDockManager::setAutoHideConfigFlag(CDockManager::AutoHideHasMinimizeButton, false);
+
+    CDockManager::setConfigFlag(CDockManager::ActiveTabHasCloseButton, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHasCloseButton, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHasUndockButton, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHasTabsMenuButton, false);
+    CDockManager::setConfigFlag(CDockManager::DockAreaHideDisabledButtons, false);
+    CDockManager::setConfigFlag(CDockManager::DisableTabTextEliding, false);
+    CDockManager::setConfigFlag(CDockManager::AlwaysShowTabs, false);
+    CDockManager::setConfigFlag(CDockManager::OpaqueSplitterResize, true);
+    CDockManager::setConfigFlag(CDockManager::FocusHighlighting, false);
+
+
+
+    m_dockManager = new CDockManager(this);
+
+    // Create the docking containers for the existing widget
+    CDockWidget* centralDockWidget = new CDockWidget("CentralWidget");
+    centralDockWidget->setWidget(tabWidget);
+    auto* centralDockArea = m_dockManager->setCentralWidget(centralDockWidget);
+    centralDockArea->setAllowedAreas(DockWidgetArea::OuterDockAreas);
+
+    CDockWidget* fileExplorerDockWidget = new CDockWidget("Files");
+    fileExplorerDockWidget->setWidget(treeView);
+    fileExplorerDockWidget->setMinimumSizeHintMode(CDockWidget::MinimumSizeHintFromDockWidget);
+    fileExplorerDockWidget->setMinimumSize(200,150);
+    m_dockManager->addDockWidget(DockWidgetArea::LeftDockWidgetArea, fileExplorerDockWidget, centralDockArea);
+    //const auto autoHideContainer = m_dockManager->addAutoHideDockWidget(SideBarLocation::SideBarLeft, fileExplorerDockWidget);
+    //autoHideContainer->setSize(480);
+
+
+    // CDockWidget* filtersDockWidget = new CDockWidget("Filters and Highlight");
+    // filtersDockWidget->setWidget(filtersPane);
+    // filtersDockWidget->setMinimumSizeHintMode(CDockWidget::MinimumSizeHintFromDockWidget);
+    // filtersDockWidget->setMinimumSize(200,150);
+    // const auto autoHideContainer = m_dockManager->addAutoHideDockWidget(SideBarLocation::SideBarBottom, filtersDockWidget);
+    // autoHideContainer->setSize(480);
+
+    CDockWidget* searchDockWidget = new CDockWidget("Search");
+    searchDockWidget->setWidget(searchPane);
+    searchDockWidget->setMinimumSizeHintMode(CDockWidget::MinimumSizeHintFromDockWidget);
+    searchDockWidget->setMinimumSize(200,150);
+    const auto autoHideContainer2 = m_dockManager->addAutoHideDockWidget(SideBarLocation::SideBarBottom, searchDockWidget);
+    autoHideContainer2->setSize(480);
+
+    connect(Ui_MainWindow::searchPane, &SearchTab::search, this, &MainWindow::SearchTab_Search);
+    connect(Ui_MainWindow::searchPane, &SearchTab::resultSelected, this, &MainWindow::SearchTab_resultSelected);
+}
+
 void MainWindow::SetupNavigationTab()
 {
     // Load file explorer
     QString path = GetOpenDefaultFolder();
-    m_fsmodel = new QFileSystemModel();
+    m_fsmodel = new QFileSystemModel(this);
     m_fsmodel->setRootPath(path);
     qDebug() << "Default Path" << path;
     treeView->setModel(m_fsmodel);
@@ -235,6 +301,7 @@ void MainWindow::UpdateTheme()
     this->actionShow_summary->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-summary.png")));
     this->actionRefresh->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-refresh.png")));
     this->actionFind->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-find.png")));
+    this->actionFind_in_files->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-find.png")));
     this->actionOpen_in_new_tab->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-copy.png")));
     this->actionMerge_into_tab->setIcon(QIcon(ThemeUtils::GetThemedIcon(":/ctx-open-merge.png")));
 }
@@ -248,7 +315,7 @@ void MainWindow::UpdateMenuAndStatusBar()
 
     // Menu items
     menuHighlight->setEnabled(logTab);
-    menuFind->setEnabled(logTab);
+    // menuFind->setEnabled(logTab);
     // QActions
     // File
     actionMerge_into_tab->setEnabled(logTab);
@@ -298,6 +365,7 @@ void MainWindow::WriteSettings()
     settings.setValue("windowState", saveState());
     settings.setValue("recentFiles", m_recentFiles);
     settings.setValue("lastOpenFolder", m_lastOpenFolder);
+    settings.setValue("dockWidgets", m_dockManager->saveState());
     settings.endGroup();
 
     ValueDlg::WriteSettings(settings);
@@ -325,6 +393,8 @@ void MainWindow::ReadSettings()
     }
     m_recentFiles = settings.value("recentFiles", QStringList()).toStringList();
     m_lastOpenFolder = settings.value("lastOpenFolder", QString()).toString();
+    if (!settings.value("dockWidgets").isNull())
+        m_dockManager->restoreState(settings.value("dockWidgets").toByteArray());
     settings.endGroup();
 
     //Load Options variables from config file
@@ -884,6 +954,11 @@ void MainWindow::closeEvent(QCloseEvent * event)
 {
     event->ignore();
     WriteSettings();
+
+    // Delete dock manager here to delete all floating widgets. This ensures
+    // that all top level windows of the dock manager are properly closed
+    m_dockManager->deleteLater();
+
     event->accept();
 }
 
@@ -935,6 +1010,19 @@ void MainWindow::on_actionHighlight_only_mode_triggered()
 
     GetCurrentLogTab()->RefilterTreeView();
     UpdateMenuAndStatusBar();
+}
+
+// Find in files
+void MainWindow::on_actionFind_in_files_triggered()
+{
+    qDebug() << "Search in files...";
+    auto searchWidget = this->m_dockManager->findDockWidget("Search");
+    auto location = searchWidget->autoHideLocation();
+    qDebug() << "Location: " << location;
+    if (location != SideBarLocation::SideBarNone) {
+        searchWidget->autoHideDockContainer()->collapseView(false);
+        this->m_dockManager->setDockWidgetFocused(searchWidget);
+    }
 }
 
 //Find
@@ -1366,6 +1454,70 @@ void GeQueryInfoViz(TreeModel* model)
 void MainWindow::on_actionCreate_info_viz_triggered()
 {
     GeQueryInfoViz(GetCurrentTreeModel());
+}
+
+void MainWindow::SearchTab_Search(const QString &text, const SearchScope &scope, const SearchMode &mode, const bool &caseSensitive)
+{
+    qDebug() << "Scope: " << scope;
+    qDebug() << "Search: " << text;
+    qDebug() << "Type: " << mode;
+    qDebug() << "Case: " << caseSensitive;
+
+    QStringList files = FileSearcher::Instance()->getFileList(*m_fsmodel);
+
+    const auto results = FileSearcher::Instance()->searchInFilesConcurrently(files, text);
+    displayResults(results);
+}
+
+void MainWindow::displayResults(const QList<SearchResult>& results) {
+
+    auto* model = new QStandardItemModel;
+    model->setHorizontalHeaderLabels({"File", "Line Number", "Content"});
+
+    QHash<QString, QStandardItem*> fileItems;
+
+    for (const SearchResult& result : results) {
+
+        if (!fileItems.contains(result.filePath)) {
+            QStandardItem* fileItem = new QStandardItem(result.fileName);
+            fileItem->setToolTip(result.filePath);
+            model->appendRow(fileItem);
+            fileItems[result.filePath] = fileItem;
+            qDebug() << "File:" << result.filePath;
+        }
+
+        QStandardItem* fileName = new QStandardItem("");
+        fileName->setToolTip(result.lineContent);
+        QStandardItem* lineNumberItem = new QStandardItem(QString::number(result.lineNumber));
+        lineNumberItem->setToolTip(result.lineContent);
+        QStandardItem* contentItem = new QStandardItem(result.lineContent);
+        contentItem->setToolTip(result.lineContent);
+        QStandardItem* filePath = new QStandardItem(result.filePath);
+
+        fileItems[result.filePath]->appendRow({fileName, lineNumberItem, contentItem, filePath});
+    }
+
+    searchPane->showResults(*model);
+}
+
+void MainWindow::SearchTab_resultSelected(const QString fileName, const QString filePath, const int lineNumber, const QString text)
+{
+    QFileInfo info(filePath);
+    if (info.exists() && info.isFile()) {
+        GotoLine(filePath, lineNumber);
+    }
+}
+
+void MainWindow::GotoLine(const QString filePath, const int lineNumber)
+{
+    // Open file if needed
+    TreeActions(filePath, AppActions::OpenFile);
+
+    QTreeView* tree = GetCurrentTreeView();
+    TreeModel* model = GetCurrentTreeModel();
+
+    QModelIndex idx = model->index(lineNumber-1, 0);
+    tree->setCurrentIndex(idx);
 }
 
 void MainWindow::FindPrev()

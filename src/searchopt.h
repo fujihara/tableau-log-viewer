@@ -8,6 +8,13 @@
 #include <QString>
 #include <QVector>
 
+enum SearchScope: short
+{
+    Folder,
+    CurrentFile,
+    AllOpened
+};
+
 enum SearchMode : short {
     Equals,
     Contains,

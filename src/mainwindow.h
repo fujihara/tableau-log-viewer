@@ -5,6 +5,7 @@
 #include "statusbar.h"
 #include "treemodel.h"
 #include "ui_mainwindow.h"
+#include "filesearcher.h"
 
 #include <memory>
 #include <QBitArray>
@@ -20,6 +21,8 @@
 #include <QTimer>
 #include <QFileSystemModel>
 
+#include "DockManager.h"
+#include "DockWidget.h"
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
@@ -44,6 +47,9 @@ private slots:
     void UpdateMenuAndStatusBar();
     void ExportEventsToTab(QModelIndexList list, QString name);
     bool LoadLogFile(QString);
+    void SearchTab_Search(const QString &text, const SearchScope &scope, const SearchMode &mode, const bool &caseSensitive);
+    void SearchTab_resultSelected(const QString fileName, const QString filePath, const int lineNumber, const QString text);
+    void GotoLine(const QString filePath, const int lineNumber);
 
     //Slots use underscores as per QT's automatic connection syntax
     //File
@@ -72,6 +78,7 @@ private slots:
     void on_actionHighlight_only_mode_triggered();
     //Find
     void on_actionFind_triggered();
+    void on_actionFind_in_files_triggered();
     void on_actionFind_next_triggered();
     void on_actionFind_previous_triggered();
 
@@ -90,6 +97,7 @@ private:
     void WriteSettings();
     void ReadSettings();
     void SetupNavigationTab();
+    void SetupDockPanes();
 
     EventListPtr GetEventsFromFile(QString path, int & skippedCount);
     void TreeActions(const QString &path, AppActions action);
@@ -122,12 +130,16 @@ private:
     StatusBar * m_statusBar;
     QStringList m_recentFiles;
     QString m_lastOpenFolder;
-    QFileSystemModel * m_fsmodel = new QFileSystemModel();
+    QFileSystemModel *m_fsmodel;
+
+    ads::CDockManager* m_dockManager;
 
     // m_liveFiles is used to store all the files that have been opened/are open in the MainWindow.
     // If a user opens a new tab, this structure is used to check the file path of the file being loaded
     // in a new tab. If the file is open in another tab, the new tab cannot be opened.
     QList<QString> m_allFiles;
+
+    void displayResults(const QList<SearchResult>& results);
 };
 
 #endif // MAINWINDOW_H

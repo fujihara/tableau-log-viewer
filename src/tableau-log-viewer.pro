@@ -2,6 +2,7 @@ QT       += core gui
 QT       += network
 QT       += webenginewidgets
 QT       += widgets
+QT       += concurrent
 
 TARGET = "tlv"
 TEMPLATE = app
@@ -14,11 +15,13 @@ FORMS       = \
     mainwindow.ui \
     optionsdlg.ui \
     savefilterdialog.ui \
+    searchtab.ui \
     valuedlg.ui 
 
 HEADERS     = \
     colorlibrary.h \
     column.h \
+    filesearcher.h \
     filtertab.h \
     finddlg.h \
     highlightdlg.h \
@@ -31,6 +34,8 @@ HEADERS     = \
     processevent.h \
     savefilterdialog.h \
     searchopt.h \
+    searchtab.h \
+    singleton.h \
     statusbar.h \
     tokenizer.h \
     treeitem.h \
@@ -43,6 +48,7 @@ HEADERS     = \
 
 SOURCES     = \
     colorlibrary.cpp \
+    filesearcher.cpp \
     filtertab.cpp \
     finddlg.cpp \
     highlightdlg.cpp \
@@ -56,6 +62,7 @@ SOURCES     = \
     processevent.cpp \
     savefilterdialog.cpp \
     searchopt.cpp \
+    searchtab.cpp \
     statusbar.cpp \
     tokenizer.cpp \
     treeitem.cpp \
@@ -79,3 +86,8 @@ QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
 
 VERSION = 1.3.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
+
+LIBS += -L$$PWD/../../../Test/Qt-Advanced-Docking-System/build/Qt_6_7_3_for_macOS-Debug/lib/ -lqtadvanceddocking_debug
+
+INCLUDEPATH += $$PWD/../../../Test/Qt-Advanced-Docking-System/src
+DEPENDPATH += $$PWD/../../../Test/Qt-Advanced-Docking-System/src
