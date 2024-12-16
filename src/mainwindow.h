@@ -21,8 +21,8 @@
 #include <QTimer>
 #include <QFileSystemModel>
 
-#include "DockManager.h"
-#include "DockWidget.h"
+#include <DockManager.h>
+#include <DockWidget.h>
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {

@@ -84,10 +84,18 @@ CONFIG += x86_64
 
 QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
 
-VERSION = 1.3.0
+VERSION = 1.5.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
-LIBS += -L$$PWD/../../../Test/Qt-Advanced-Docking-System/build/Qt_6_7_3_for_macOS-Debug/lib/ -lqtadvanceddocking_debug
+INCLUDEPATH += $$PWD/../third-party/ads/include
 
-INCLUDEPATH += $$PWD/../../../Test/Qt-Advanced-Docking-System/src
-DEPENDPATH += $$PWD/../../../Test/Qt-Advanced-Docking-System/src
+mac{
+    LIBS += -L$$PWD/../third-party/ads/lib/ -lqtadvanceddocking
+}
+else:win32 {
+
+}
+
+
+
+
