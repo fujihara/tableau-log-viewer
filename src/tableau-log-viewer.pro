@@ -89,13 +89,19 @@ DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 INCLUDEPATH += $$PWD/../third-party/ads/include
 
-mac{
-    LIBS += -L$$PWD/../third-party/ads/lib/ -lqtadvanceddocking
+
+CONFIG(debug, debug|release){
+    mac{
+        LIBS += -L$$PWD/../third-party/ads/lib/mac -lqtadvanceddocking_debug
+    }
+    else {
+        LIBS += -L$$PWD/../third-party/ads/lib/win32 -lqtadvanceddockingd
+    }
+} else{
+    mac{
+        LIBS += -L$$PWD/../third-party/ads/lib/mac -lqtadvanceddocking
+    }
+    else {
+        LIBS += -L$$PWD/../third-party/ads/lib/win32 -lqtadvanceddocking
+    }
 }
-else:win32 {
-
-}
-
-
-
-
