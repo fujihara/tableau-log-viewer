@@ -2,7 +2,7 @@ version: 1.0.{build}
 image: Visual Studio 2022
 clone_folder: C:\projects\tableau-log-viewer
 environment:
-  QTHOME: C:\Qt\6.7\msvc2019_64
+  QTHOME: C:\Qt\6.5.3\msvc2019_64
   PATH: '%QTHOME%\bin;%PATH%'
   BUILDDIR: '%APPVEYOR_BUILD_FOLDER%\build-release'
 build_script:
