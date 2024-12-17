@@ -2,10 +2,11 @@ version: 1.0.{build}
 image: Visual Studio 2022
 clone_folder: C:\projects\tableau-log-viewer
 environment:
-  QTHOME: C:\Qt\6.5.3\msvc2019_64
+  QT: '6.5.3'
+  QTHOME: 'C:\Qt\%QT%\msvc2019_64'
   PATH: '%QTHOME%\bin;%PATH%'
   BUILDDIR: '%APPVEYOR_BUILD_FOLDER%\build-release'
 build_script:
-- cmd: "echo \"Set compiler environment\"\ncall \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64\n\necho \"Current dir: %cd%\"\n\necho \"Create dir: %BUILDDIR%\"\nmkdir %BUILDDIR%\n\ncd /d %BUILDDIR%\necho \"Current dir: %cd%\"\n\necho \"Call qmake from: %QTHOME%\\bin\"\nqmake -spec win32-msvc -Wall ..\\src\\tableau-log-viewer.pro\n\necho \"Make release\"\nnmake \nnmake release" 
+- cmd: "echo \"Set compiler environment\"\ncall \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x86_amd64\n\necho \"Current dir: %cd%\"\n\necho \"Create dir: %BUILDDIR%\"\nmkdir %BUILDDIR%\n\ncd /d %BUILDDIR%\necho \"Current dir: %cd%\"\n\necho \"Call qmake from: %QTHOME%\\bin\"\nqmake -spec win32-msvc -Wall ..\\src\\tableau-log-viewer.pro\n\necho \"Make \"\nnmake \n" 
 on_success:
 - cmd: echo "Build completed with success"
