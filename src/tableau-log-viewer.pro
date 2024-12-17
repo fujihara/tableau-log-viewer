@@ -75,33 +75,39 @@ SOURCES     = \
 
 RESOURCES   = resources.qrc
 
-win32:RC_ICONS += ../resources/images/tlv.ico
-
-ICON = ../resources/images/tlv.icns
-
-CONFIG += c++17
-CONFIG += x86_64 
-
-QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
-
 VERSION = 1.5.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
+QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
 INCLUDEPATH += $$PWD/../third-party/ads/include
 
+# qmake will process all libraries linked to by the application and find their meta-information
+CONFIG += link_prl
 
-CONFIG(debug, debug|release){
-    mac{
+macx {
+    # Config for mac
+    ICON = ../resources/images/tlv.icns
+    CONFIG += app_bundle
+    # Third-party libs
+    CONFIG(debug, debug|release) {
         LIBS += -L$$PWD/../third-party/ads/lib/mac -lqtadvanceddocking_debug
-    }
-    else {
-        LIBS += -L$$PWD/../third-party/ads/lib/win32 -lqtadvanceddockingd
-    }
-} else{
-    mac{
+    } else {
         LIBS += -L$$PWD/../third-party/ads/lib/mac -lqtadvanceddocking
     }
-    else {
+}
+else {
+    # Config for windows
+    RC_ICONS += ../resources/images/tlv.ico
+    CONFIG += c++17
+    CONFIG += x86_64
+    CONFIG += windows
+    QMAKE_TARGET_COMPANY = "Tableau Software"
+    QMAKE_TARGET_DESCRIPTION = "Tableau Log Viewer"
+    QMAKE_TARGET_COPYRIGHT = "Copyright 2024 Tableau Software"
+    # Third-party libs
+    CONFIG(debug, debug|release) {
+        LIBS += -L$$PWD/../third-party/ads/lib/win32 -lqtadvanceddockingd
+    } else {
         LIBS += -L$$PWD/../third-party/ads/lib/win32 -lqtadvanceddocking
     }
 }
