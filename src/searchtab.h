@@ -1,7 +1,7 @@
 #ifndef SEARCHTAB_H
 #define SEARCHTAB_H
 
-#include "searchopt.h"
+#include "search.h"
 
 #include <QWidget>
 #include <QStandardItemModel>
@@ -18,8 +18,8 @@ public:
     explicit SearchTab(QWidget *parent = nullptr);
     ~SearchTab();
 
-    SearchScope searchScope();
-    SearchMode searchMode();
+    LogSearch::Scope searchScope();
+    LogSearch::Mode searchMode();
     QString searchText();
     bool matchCase();
 
@@ -28,12 +28,16 @@ public:
 private:
     Ui::SearchTab *ui;
 
+    void setReadyToSearch();
+    void setSearching();
+
 private slots:
     void on_searchButton_clicked();
     void on_resultsView_doubleClicked(const QModelIndex &index);
 
 signals:
-    void search(const QString &text, const SearchScope &scope, const SearchMode &mode, const bool &caseSensitive);
+    void search(const QString &text, const LogSearch::Scope scope, const LogSearch::Mode mode, const bool caseSensitive);
+    void cancelSearch();
     void resultSelected(const QString fileName, const QString filePath, const int lineNumber, const QString text);
 };
 

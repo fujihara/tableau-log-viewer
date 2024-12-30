@@ -10,10 +10,8 @@
 #include "savefilterdialog.h"
 #include "themeutils.h"
 #include "zoomabletreeview.h"
-#include "filesearcher.h"
 
-#include <map>
-
+#include <QtCore>
 #include <QApplication>
 #include <QDateTime>
 #include <QDebug>
@@ -252,6 +250,7 @@ void MainWindow::SetupDockPanes()
 
     connect(Ui_MainWindow::searchPane, &SearchTab::search, this, &MainWindow::SearchTab_Search);
     connect(Ui_MainWindow::searchPane, &SearchTab::resultSelected, this, &MainWindow::SearchTab_resultSelected);
+    connect(Ui_MainWindow::searchPane, &SearchTab::cancelSearch, this, &MainWindow::SearchTab_cancelSearch);
 }
 
 void MainWindow::SetupNavigationTab()
@@ -1456,48 +1455,50 @@ void MainWindow::on_actionCreate_info_viz_triggered()
     GeQueryInfoViz(GetCurrentTreeModel());
 }
 
-void MainWindow::SearchTab_Search(const QString &text, const SearchScope &scope, const SearchMode &mode, const bool &caseSensitive)
+void MainWindow::SearchTab_Search(const QString &text, const LogSearch::Scope scope, const LogSearch::Mode mode, const bool caseSensitive)
 {
-    qDebug() << "Scope: " << scope;
-    qDebug() << "Search: " << text;
-    qDebug() << "Type: " << mode;
-    qDebug() << "Case: " << caseSensitive;
+    qDebug() << "MainWindow::SearchTab_Search" << QThread::currentThread();
 
-    QStringList files = FileSearcher::Instance()->getFileList(*m_fsmodel);
+    auto onCompleted = [this](const LogSearch::Status status,
+                              const QSharedPointer<LogSearch::Search> search) {
+        qDebug() << "MainWindow::SearchTab_Search::onCompleted: thread:" << QThread::currentThread()
+                 << "isMainThread:" << QThread::isMainThread();
+        qDebug() << "MainWindow::SearchTab_Search::onCompleted"
+                 << "Search compleated with: " << status << search;
 
-    const auto results = FileSearcher::Instance()->searchInFilesConcurrently(files, text);
-    displayResults(results);
+        this->statusbar->showMessage(QString("Search %1 - Found %2 matches in %3 file%4")
+                                         .arg(search->status)
+                                         .arg(search->getTotalMatches())
+                                         .arg(search->getResultsList().length())
+                                         .arg(search->getResultsList().length() > 1 ? "s" : ""));
+        this->searchPane->showResults(*(search->toModel()));
+    };
+
+    auto onProgress = [](const int value, const QSharedPointer<LogSearch::Search> search) {
+        qDebug() << "MainWindow::SearchTab_Search::progress" << "Search progress: " << value << "% - " << search;
+    };
+
+    QStringList files = LogSearch::SearchManager::getFileList(*m_fsmodel);
+    LogSearch::SearchParameters parameters;
+    parameters.files = files;
+    parameters.searchString = text;
+    parameters.scope = scope;
+    parameters.mode = mode;
+    parameters.caseSensitive = caseSensitive;
+
+    // Display status bar message
+    statusbar->showMessage(QString("Searching in %1 %2...")
+                               .arg(files.length())
+                               .arg(files.length() == 1 ? "file..." : "files..."));
+
+    LogSearch::SearchManager::Instance()->search(parameters, this, onProgress, onCompleted);
 }
 
-void MainWindow::displayResults(const QList<SearchResult>& results) {
-
-    auto* model = new QStandardItemModel;
-    model->setHorizontalHeaderLabels({"File", "Line Number", "Content"});
-
-    QHash<QString, QStandardItem*> fileItems;
-
-    for (const SearchResult& result : results) {
-
-        if (!fileItems.contains(result.filePath)) {
-            QStandardItem* fileItem = new QStandardItem(result.fileName);
-            fileItem->setToolTip(result.filePath);
-            model->appendRow(fileItem);
-            fileItems[result.filePath] = fileItem;
-            qDebug() << "File:" << result.filePath;
-        }
-
-        QStandardItem* fileName = new QStandardItem("");
-        fileName->setToolTip(result.lineContent);
-        QStandardItem* lineNumberItem = new QStandardItem(QString::number(result.lineNumber));
-        lineNumberItem->setToolTip(result.lineContent);
-        QStandardItem* contentItem = new QStandardItem(result.lineContent);
-        contentItem->setToolTip(result.lineContent);
-        QStandardItem* filePath = new QStandardItem(result.filePath);
-
-        fileItems[result.filePath]->appendRow({fileName, lineNumberItem, contentItem, filePath});
-    }
-
-    searchPane->showResults(*model);
+void MainWindow::SearchTab_cancelSearch()
+{
+    qDebug() << "MainWindow::SearchTab_cancelSearch: Cancel current search";
+    statusbar->showMessage("Canceling current search...", 3000);
+    LogSearch::SearchManager::Instance()->cancelCurrentSearch();
 }
 
 void MainWindow::SearchTab_resultSelected(const QString fileName, const QString filePath, const int lineNumber, const QString text)

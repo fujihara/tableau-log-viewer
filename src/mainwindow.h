@@ -5,9 +5,8 @@
 #include "statusbar.h"
 #include "treemodel.h"
 #include "ui_mainwindow.h"
-#include "filesearcher.h"
+#include "search.h"
 
-#include <memory>
 #include <QBitArray>
 #include <QJsonObject>
 #include <QLabel>
@@ -47,7 +46,9 @@ private slots:
     void UpdateMenuAndStatusBar();
     void ExportEventsToTab(QModelIndexList list, QString name);
     bool LoadLogFile(QString);
-    void SearchTab_Search(const QString &text, const SearchScope &scope, const SearchMode &mode, const bool &caseSensitive);
+
+    void SearchTab_Search(const QString &text, const LogSearch::Scope scope, const LogSearch::Mode mode, const bool caseSensitive);
+    void SearchTab_cancelSearch();
     void SearchTab_resultSelected(const QString fileName, const QString filePath, const int lineNumber, const QString text);
     void GotoLine(const QString filePath, const int lineNumber);
 
@@ -139,7 +140,7 @@ private:
     // in a new tab. If the file is open in another tab, the new tab cannot be opened.
     QList<QString> m_allFiles;
 
-    void displayResults(const QList<SearchResult>& results);
+    //void displayResults(const QList<SearchResult>& results);
 };
 
 #endif // MAINWINDOW_H

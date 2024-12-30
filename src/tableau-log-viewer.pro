@@ -21,7 +21,6 @@ FORMS       = \
 HEADERS     = \
     colorlibrary.h \
     column.h \
-    filesearcher.h \
     filtertab.h \
     finddlg.h \
     highlightdlg.h \
@@ -33,6 +32,7 @@ HEADERS     = \
     pathhelper.h \
     processevent.h \
     savefilterdialog.h \
+    search.h \
     searchopt.h \
     searchtab.h \
     singleton.h \
@@ -48,7 +48,6 @@ HEADERS     = \
 
 SOURCES     = \
     colorlibrary.cpp \
-    filesearcher.cpp \
     filtertab.cpp \
     finddlg.cpp \
     highlightdlg.cpp \
@@ -61,6 +60,7 @@ SOURCES     = \
     pathhelper.cpp \
     processevent.cpp \
     savefilterdialog.cpp \
+    search.cpp \
     searchopt.cpp \
     searchtab.cpp \
     statusbar.cpp \
@@ -90,6 +90,7 @@ macx {
     CONFIG += app_bundle
     # Third-party libs
     CONFIG(debug, debug|release) {
+        DEFINES += QT_SHAREDPOINTER_TRACK_POINTERS
         LIBS += -L$$PWD/../third-party/ads/lib/mac -lqtadvanceddocking_debug
     } else {
         LIBS += -L$$PWD/../third-party/ads/lib/mac -lqtadvanceddocking

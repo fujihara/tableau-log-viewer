@@ -23,41 +23,76 @@ SearchTab::~SearchTab()
     delete ui;
 }
 
+void SearchTab::setReadyToSearch()
+{
+    // Enable the search controls
+    for (QObject *obj : ui->groupSearchControls->children()) {
+        QWidget *wd = qobject_cast<QWidget *>(obj);
+        if (wd) {
+            wd->setEnabled(true);
+        }
+    }
+    ui->searchButton->setText("Search");
+}
+
+void SearchTab::setSearching()
+{
+    // Disable the search controls
+    for (QObject *obj : ui->groupSearchControls->children()) {
+        QWidget *wd = qobject_cast<QWidget *>(obj);
+        if (wd) {
+            wd->setEnabled(false);
+        }
+    }
+    ui->groupResults->setVisible(false);
+    ui->searchButton->setText("Cancel");
+    ui->searchButton->setEnabled(true);
+}
+
+
 void SearchTab::on_searchButton_clicked()
 {
-    ui->groupResults->setVisible(false);
+    // Button is set as "Cancel"
+    if (ui->searchButton->text() == "Cancel") {
+        emit cancelSearch();
+        this->setReadyToSearch();
+        return;
+    }
+
+    // New search
+    this->setSearching();
     emit search(searchText(), searchScope(), searchMode(), matchCase());
 }
 
-SearchScope SearchTab::searchScope()
+LogSearch::Scope SearchTab::searchScope()
 {
     switch (ui->scopeComboBox->currentIndex()) {
     case 0:
-        return SearchScope::Folder;
+        return LogSearch::Scope::Folder;
     case 1:
-        return SearchScope::CurrentFile;
+        return LogSearch::Scope::CurrentFile;
     case 2:
-        return SearchScope::AllOpened;
+        return LogSearch::Scope::AllOpened;
     default:
-        return SearchScope::Folder;
+        return LogSearch::Scope::Folder;
     }
 }
 
-SearchMode SearchTab::searchMode()
+LogSearch::Mode SearchTab::searchMode()
 {
     switch (ui->searchTypeComboBox->currentIndex()) {
     case 0:
-        return SearchMode::Contains;
+        return LogSearch::Mode::Contains;
     case 1:
-        return SearchMode::Regex;
+        return LogSearch::Mode::Regex;
     case 2:
-        return SearchMode::Equals;
+        return LogSearch::Mode::Equals;
     case 3:
-        return SearchMode::StartsWith;
+        return LogSearch::Mode::StartsWith;
     case 4:
-        return SearchMode::EndsWith;
+        return LogSearch::Mode::EndsWith;
     default:
-        return SearchMode::Contains;
+        return LogSearch::Mode::Contains;
     }
 }
 
@@ -71,12 +106,21 @@ bool SearchTab::matchCase()
     return ui->checkBoxCase->isChecked();
 }
 
-void SearchTab::showResults(
-    QStandardItemModel &model)
+void SearchTab::showResults(QStandardItemModel &model)
 {
+    // Get the previous used model
+    auto *prevModel = ui->resultsView->model();
+
     ui->resultsView->setModel(&model);
     ui->resultsView->expandAll();
     ui->groupResults->setVisible(true);
+
+    // Clear prev model memory
+    if (prevModel)
+        prevModel->deleteLater();
+
+    // Set ready to search again
+    this->setReadyToSearch();
 }
 
 void SearchTab::on_resultsView_doubleClicked(const QModelIndex &index)
