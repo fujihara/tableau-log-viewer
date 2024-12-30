@@ -59,6 +59,12 @@ void SearchTab::on_searchButton_clicked()
         return;
     }
 
+    // Check the input string
+    if (this->searchText().isEmpty()) {
+        // Do nothing
+        return;
+    }
+
     // New search
     this->setSearching();
     emit search(searchText(), searchScope(), searchMode(), matchCase());

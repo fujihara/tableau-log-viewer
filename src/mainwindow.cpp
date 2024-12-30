@@ -1459,6 +1459,82 @@ void MainWindow::SearchTab_Search(const QString &text, const LogSearch::Scope sc
 {
     qDebug() << "MainWindow::SearchTab_Search" << QThread::currentThread();
 
+    // Check the search string
+    if (text.isEmpty()) {
+        this->statusbar->showMessage("Enter any search string.");
+        return;
+    }
+
+    // List of files that will be used for the search
+    QStringList files;
+
+
+    // Handle single file search
+    if (scope == LogSearch::Scope::CurrentFile) {
+        if (!this->GetCurrentLogTab()) {
+            // No file open
+            this->statusbar->showMessage(
+                "There is open file. Open a log file or change the search scope.");
+            return;
+        }
+
+        // Check if the tab is a log file.
+        auto currentPath = this->GetCurrentLogTab()->GetTabPath();
+        qDebug() << "MainWindow::SearchTab_Search: Current path:" << currentPath;
+        QFileInfo fileInfo(currentPath);
+        if (!fileInfo.isFile() || !fileInfo.exists()) {
+            // Cannot search in live captures
+            this->statusbar->showMessage("Cannot search in live captures or merged filters. Open a "
+                                         "log file and try to search again.");
+            return;
+        }
+
+        // Set a single item list
+        files.append(currentPath);
+    }
+
+    // Handle all open files search
+    if (scope == LogSearch::Scope::AllOpened) {
+        if (this->m_allFiles.isEmpty()) {
+            // No open files
+            this->statusbar->showMessage(
+                "There is open files. Open a log file or change the search scope.");
+            return;
+        }
+
+        // Append valid files
+        for (auto item : this->m_allFiles) {
+            QFileInfo fileInfo(item);
+            if (fileInfo.isFile() && fileInfo.exists()) {
+                files.append(item);
+            }
+        }
+
+        // If none of the open tabs is a valid log file, show message and return
+        if (files.isEmpty()) {
+            this->statusbar->showMessage("Cannot search in live captures or merged filters. Open a "
+                                         "log file and try to search again.");
+            return;
+        }
+
+        // At this point file items with valid paths for the search
+    }
+
+    // Handle folder search
+    if (scope == LogSearch::Scope::Folder) {
+        // Get the files from the tabview model
+        files.append(LogSearch::SearchManager::getFileList(*m_fsmodel));
+
+        // If the folder is empty show message and return
+        if (files.isEmpty()) {
+            this->statusbar->showMessage("There is no files in the current folder.");
+            return;
+        }
+
+        // At this point file items with valid paths for the search
+    }
+
+    // Lambda function that will handle the results from the search
     auto onCompleted = [this](const LogSearch::Status status,
                               const QSharedPointer<LogSearch::Search> search) {
         qDebug() << "MainWindow::SearchTab_Search::onCompleted: thread:" << QThread::currentThread()
@@ -1474,11 +1550,12 @@ void MainWindow::SearchTab_Search(const QString &text, const LogSearch::Scope sc
         this->searchPane->showResults(*(search->toModel()));
     };
 
+    // Lambda function to handel the search progress
     auto onProgress = [](const int value, const QSharedPointer<LogSearch::Search> search) {
         qDebug() << "MainWindow::SearchTab_Search::progress" << "Search progress: " << value << "% - " << search;
     };
 
-    QStringList files = LogSearch::SearchManager::getFileList(*m_fsmodel);
+    // Start a new search
     LogSearch::SearchParameters parameters;
     parameters.files = files;
     parameters.searchString = text;
@@ -1501,7 +1578,7 @@ void MainWindow::SearchTab_cancelSearch()
     LogSearch::SearchManager::Instance()->cancelCurrentSearch();
 }
 
-void MainWindow::SearchTab_resultSelected(const QString fileName, const QString filePath, const int lineNumber, const QString text)
+void MainWindow::SearchTab_resultSelected(const QString, const QString filePath, const int lineNumber, const QString)
 {
     QFileInfo info(filePath);
     if (info.exists() && info.isFile()) {
