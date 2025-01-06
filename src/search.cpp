@@ -94,8 +94,7 @@ namespace LogSearch
         QFileInfo fileInfo(file.fileName());
 
         // Create a new instance of results
-        QSharedPointer<FileSearchResults> fileResults = QSharedPointer<FileSearchResults>::create(
-            fileInfo.fileName(), filePath);
+        QSharedPointer<FileSearchResults> fileResults = this->createFileResult(fileInfo.fileName(), filePath);
 
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
@@ -182,6 +181,13 @@ namespace LogSearch
     QList<QSharedPointer<FileSearchResults>> Search::getResultsList() const
     {
         return m_resultsList;
+    }
+
+    QSharedPointer<FileSearchResults> Search::createFileResult(QString filename, QString filePath)
+    {
+        QSharedPointer<FileSearchResults> fileResults = QSharedPointer<FileSearchResults>::create(
+            filename, filePath, this);
+        return fileResults;
     }
 
     void Search::appendResults(QSharedPointer<FileSearchResults> fileResults)

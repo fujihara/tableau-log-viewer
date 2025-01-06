@@ -106,6 +106,7 @@ namespace LogSearch
         mutable QMutex m_mutex;
         QList<QSharedPointer<FileSearchResults>> m_resultsList;
 
+        QSharedPointer<FileSearchResults> createFileResult(QString filename, QString filePath);
         void appendResults(QSharedPointer<FileSearchResults> fileResults);
         void clearResultsList();
 
