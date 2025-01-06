@@ -9,6 +9,7 @@
 #include "processevent.h"
 #include "savefilterdialog.h"
 #include "themeutils.h"
+#include "searchtab.h"
 #include "zoomabletreeview.h"
 
 #include <QtCore>
@@ -220,12 +221,12 @@ void MainWindow::SetupDockPanes()
     m_dockManager = new CDockManager(this);
 
     // Create the docking containers for the existing widget
-    CDockWidget* centralDockWidget = new CDockWidget("CentralWidget");
+    CDockWidget *centralDockWidget = m_dockManager->createDockWidget("CentralWidget");
     centralDockWidget->setWidget(tabWidget);
     auto* centralDockArea = m_dockManager->setCentralWidget(centralDockWidget);
     centralDockArea->setAllowedAreas(DockWidgetArea::OuterDockAreas);
 
-    CDockWidget* fileExplorerDockWidget = new CDockWidget("Files");
+    CDockWidget *fileExplorerDockWidget = m_dockManager->createDockWidget("Files");
     fileExplorerDockWidget->setWidget(treeView);
     fileExplorerDockWidget->setMinimumSizeHintMode(CDockWidget::MinimumSizeHintFromDockWidget);
     fileExplorerDockWidget->setMinimumSize(200,150);
@@ -241,7 +242,7 @@ void MainWindow::SetupDockPanes()
     // const auto autoHideContainer = m_dockManager->addAutoHideDockWidget(SideBarLocation::SideBarBottom, filtersDockWidget);
     // autoHideContainer->setSize(480);
 
-    CDockWidget* searchDockWidget = new CDockWidget("Search");
+    CDockWidget *searchDockWidget = m_dockManager->createDockWidget("Search");
     searchDockWidget->setWidget(searchPane);
     searchDockWidget->setMinimumSizeHintMode(CDockWidget::MinimumSizeHintFromDockWidget);
     searchDockWidget->setMinimumSize(200,150);
@@ -1537,13 +1538,13 @@ void MainWindow::SearchTab_Search(const QString &text, const LogSearch::Scope sc
     // Lambda function that will handle the results from the search
     auto onCompleted = [this](const LogSearch::Status status,
                               const QSharedPointer<LogSearch::Search> search) {
-        qDebug() << "MainWindow::SearchTab_Search::onCompleted: thread:" << QThread::currentThread()
-                 << "isMainThread:" << QThread::isMainThread();
+        // qDebug() << "MainWindow::SearchTab_Search::onCompleted: thread:" << QThread::currentThread()
+        //          << "isMainThread:" << QThread::isMainThread();
         qDebug() << "MainWindow::SearchTab_Search::onCompleted"
                  << "Search compleated with: " << status << search;
 
         this->statusbar->showMessage(QString("Search %1 - Found %2 matches in %3 file%4")
-                                         .arg(search->status)
+                                         .arg(LogSearch::QtEnumToQString<LogSearch::Status>(search->status))
                                          .arg(search->getTotalMatches())
                                          .arg(search->getResultsList().length())
                                          .arg(search->getResultsList().length() > 1 ? "s" : ""));
