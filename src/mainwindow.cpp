@@ -54,9 +54,6 @@ MainWindow::MainWindow()
     // Setup and load the last used directory ini the navigation tab
     SetupNavigationTab();
 
-    // Load the theme for the first time
-    UpdateTheme();
-
     UpdateMenuAndStatusBar();
 
     // About TLV. It will have the Version number, this only needs to be calculated once
@@ -72,6 +69,13 @@ MainWindow::MainWindow()
     connect(Ui_MainWindow::menuRecent_files, SIGNAL(triggered(QAction*)), this, SLOT(Recent_files_triggered(QAction*)));
 
     tabWidget->tabBar()->installEventFilter(this);
+
+    // Do not load try to load native themes on startup
+    // This prevents side effects of fusion themes on windows.
+    QString themeName = m_options.getTheme();
+    if (!(themeName.isNull() || themeName.isEmpty() || themeName == "Native")) {
+        UpdateTheme();
+    }
 }
 
 MainWindow::~MainWindow()

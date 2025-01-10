@@ -161,8 +161,8 @@ QString Theme::GetDefaultStyle()
         // Extract the style name from the active style class name
         // Example: QWindowsVistaStyle -> WindowsVista
         QRegularExpression regExp("^.(.*)\\+?Style$");
-        sm_defaultStyle = QApplication::style()->metaObject()->className();
-        auto match = regExp.match(sm_defaultStyle);
+        QString styleName = QApplication::style()->metaObject()->metaType().name();
+        auto match = regExp.match(styleName);
 
         if (match.hasMatch())
         {
